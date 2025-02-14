@@ -1,0 +1,275 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Name Submit</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1E1E2F 0%, #3A3A52 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .container, .submissions-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 800px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1, h2 {
+            color: #FFD700;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #FFD700;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #FF4500;
+            box-shadow: 0 0 10px rgba(255, 69, 0, 0.7);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #FFD700;
+            color: #1E1E2F;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #FF4500;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .submissions-list {
+            margin-top: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 10px;
+        }
+
+        .submission-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 1rem;
+            align-items: center;
+            animation: slideIn 0.3s ease;
+            color: #fff;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+</head>
+<body>
+    <div class="container animate_animated animate_fadeIn">
+        <div class="form-container">
+            <h1>Name Submit</h1>
+            <div class="input-group">
+                <input type="text" id="nameInput" placeholder="Enter your name" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <input type="text" id="contactInput" placeholder="Enter contact number" autocomplete="off">
+            </div>
+            <button onclick="submitName()">Submit</button>
+        </div>
+    </div>
+
+    <div class="submissions-container animate_animated animate_fadeIn">
+        <h2>Recent Submissions</h2>
+        <div class="submissions-list" id="submissionsList">
+            <!-- Submissions will be populated here -->
+        </div>
+        <button class="refresh-button" onclick="loadSubmissions()">Refresh List</button>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="dialog" id="dialog">
+        <p id="dialogMessage"></p>
+    </div>
+
+    <script>
+        const repo = "CYBER-DEXTER-LITE/speen-data-";
+        const filePath = "lucky.json";
+        const token = "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";
+
+        function showDialog(message) {
+            document.getElementById('dialogMessage').textContent = message;
+            document.getElementById('dialog').classList.add('show');
+            document.getElementById('overlay').classList.add('show');
+        }
+
+        function closeDialog() {
+            document.getElementById('dialog').classList.remove('show');
+            document.getElementById('overlay').classList.remove('show');
+        }
+
+        function shakeInput(inputElement) {
+            inputElement.classList.add('input-animation');
+            setTimeout(() => {
+                inputElement.classList.remove('input-animation');
+            }, 500);
+        }
+
+        function formatDate(dateString) {
+            const options = {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        async function loadSubmissions() {
+            const apiUrl = https://api.github.com/repos/${repo}/contents/${filePath};
+            try {
+                const response = await fetch(apiUrl, {
+                    headers: { Authorization: token ${token} }
+                });
+                const fileData = await response.json();
+                const content = JSON.parse(atob(fileData.content));
+                
+                const submissionsList = document.getElementById('submissionsList');
+                submissionsList.innerHTML = '';
+                
+                // Sort by timestamp in descending order (newest first)
+                content.names.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                content.names.forEach(entry => {
+                    const submissionItem = document.createElement('div');
+                    submissionItem.className = 'submission-item';
+                    submissionItem.innerHTML = `
+                        <div class="name-cell">${entry.name}</div>
+                        <div class="contact-cell">${entry.contact}</div>
+                        <div class="time-cell">${formatDate(entry.timestamp)}</div>
+                    `;
+                    submissionsList.appendChild(submissionItem);
+                });
+            } catch (error) {
+                console.error("Error loading submissions:", error);
+                showDialog("Error loading submissions. Please try again.");
+            }
+        }
+
+        async function submitName() {
+            const nameInput = document.getElementById("nameInput");
+            const contactInput = document.getElementById("contactInput");
+            const name = nameInput.value.trim();
+            const contact = contactInput.value.trim();
+            
+            if (!name || !contact) {
+                if (!name) shakeInput(nameInput);
+                if (!contact) shakeInput(contactInput);
+                showDialog("Please enter both name and contact number.");
+                return;
+            }
+
+            const apiUrl = https://api.github.com/repos/${repo}/contents/${filePath};
+            try {
+                const response = await fetch(apiUrl, {
+                    headers: { Authorization: token ${token} }
+                });
+                const fileData = await response.json();
+                
+                const content = JSON.parse(atob(fileData.content));
+                
+                const exists = content.names.some(entry => entry.name === name && entry.contact === contact);
+                if (exists) {
+                    showDialog("This name and contact number is already submitted!");
+                    return;
+                }
+
+                const timestamp = new Date().toISOString();
+                content.names.push({ name, contact, timestamp });
+                const updatedContent = btoa(JSON.stringify(content, null, 2));
+
+                await fetch(apiUrl, {
+                    method: "PUT",
+                    headers: {
+                        Authorization: token ${token},
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: "Add new name",
+                        content: updatedContent,
+                        sha: fileData.sha
+                    })
+                });
+
+                showDialog("Name submitted successfully!");
+                nameInput.value = "";
+                contactInput.value = "";
+                loadSubmissions(); // Refresh the submissions list
+            } catch (error) {
+                console.error("Error submitting name:", error);
+                showDialog("An error occurred. Please try again later.");
+            }
+        }
+
+        // Close dialog when clicking outside
+        document.getElementById('overlay').addEventListener('click', closeDialog);
+
+        // Load submissions when page loads
+        document.addEventListener('DOMContentLoaded', loadSubmissions);
+    </script>
+</body>
+</html>
